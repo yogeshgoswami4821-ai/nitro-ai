@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Camera Test - Retro AI</title>
+  <style>
+    body {
+      background: #020617;
+      color: #e5e7eb;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+    }
+    video {
+      width: 320px;
+      max-width: 90vw;
+      border-radius: 12px;
+      background: #111827;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      background: #4f46e5;
+      color: white;
+      margin-bottom: 10px;
+    }
+    #msg {
+      font-size: 0.85rem;
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Camera Test</h1>
+  <p>Button dabao aur phir browser me <b>Allow</b> select karo.</p>
+  <video id="video" autoplay playsinline muted></video>
+  <button id="btn">📷 Start camera</button>
+  <div id="msg"></div>
+
+  <script>
+    const video = document.getElementById("video");
+    const btn = document.getElementById("btn");
+    const msg = document.getElementById("msg");
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      msg.textContent = "Ye browser camera ko support nahi karta. Please Chrome / Edge / Firefox latest use karein.";
+    }
+
+    btn.addEventListener("click", async () => {
+      msg.textContent = "Camera permission ke popup me ALLOW choose karein.";
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = stream;
+        msg.textContent = "✅ Camera chal raha hai. Agar yahan video dikh raha hai to problem Retro-AI code me hogi.";
+      } catch (err) {
+        console.error(err);
+        msg.textContent = "❌ Camera error: " + err.name + " - " + err.message +
+          "\n\nAksar ye tab hota hai jab permission Block ho ya Windows settings me camera off ho.";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,71 +1,408 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Camera Test - Retro AI</title>
+  <meta charset="UTF-8" />
+  <title>Retro-AI Mental Wellness</title>
   <style>
     body {
-      background: #020617;
-      color: #e5e7eb;
-      font-family: system-ui, sans-serif;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1a2840, #050814);
+      color: #f5f5f5;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
+    }
+    h1 {
+      margin-top: 20px;
+      margin-bottom: 5px;
+      font-size: 1.8rem;
       text-align: center;
     }
-    video {
-      width: 320px;
-      max-width: 90vw;
-      border-radius: 12px;
-      background: #111827;
-      margin-bottom: 10px;
+    .subtitle {
+      font-size: 0.85rem;
+      color: #a0aec0;
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 15px;
     }
-    button {
-      padding: 8px 16px;
+    #app {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+      width: 100%;
+      max-width: 1000px;
+      box-sizing: border-box;
+    }
+    .camera-card, .info-card {
+      background: rgba(15, 23, 42, 0.9);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(18px);
+    }
+    .camera-card { position: relative; }
+    video, canvas {
+      border-radius: 14px;
+      max-width: 420px;
+      width: 100%;
+      background: #020617;
+    }
+    #overlay {
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      pointer-events: none;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: #cbd5f5;
+    }
+    #start-btn {
+      margin-top: 10px;
+      padding: 8px 14px;
       border-radius: 999px;
       border: none;
       cursor: pointer;
-      font-size: 0.9rem;
-      background: #4f46e5;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: linear-gradient(to right, #38bdf8, #6366f1);
       color: white;
+    }
+    #start-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+    .info-card {
+      max-width: 420px;
+      width: 100%;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(56, 189, 248, 0.16);
+      color: #e0f2fe;
       margin-bottom: 10px;
     }
-    #msg {
-      font-size: 0.85rem;
-      max-width: 400px;
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
     }
+    .scores { margin-top: 10px; font-size: 0.9rem; line-height: 1.6; }
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .score-label { opacity: 0.9; }
+    .score-bar-wrapper {
+      flex: 1;
+      margin: 0 8px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.4);
+      overflow: hidden;
+    }
+    .score-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(to right, #22c55e, #facc15, #f97316, #ef4444);
+      transition: width 0.2s ease-out;
+    }
+    .score-value {
+      min-width: 40px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    #risk-level { margin-top: 10px; font-size: 0.95rem; font-weight: 600; }
+    #risk-level.low { color: #22c55e; }
+    #risk-level.medium { color: #facc15; }
+    #risk-level.high { color: #f97316; }
+    #risk-level.very-high { color: #f97316; }
+    #urgent {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      background: rgba(239, 68, 68, 0.12);
+      border: 1px solid rgba(248, 113, 113, 0.5);
+      color: #fecaca;
+      display: none;
+    }
+    #suggestion {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: #e5e7eb;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+    .chip {
+      font-size: 0.75rem;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      color: #cbd5f5;
+    }
+    .disclaimer {
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      line-height: 1.4;
+    }
+    @media (max-width: 768px) { #app { padding: 12px; } }
   </style>
 </head>
 <body>
-  <h1>Camera Test</h1>
-  <p>Button dabao aur phir browser me <b>Allow</b> select karo.</p>
-  <video id="video" autoplay playsinline muted></video>
-  <button id="btn">📷 Start camera</button>
-  <div id="msg"></div>
+  <h1>Retro-AI Mental Wellness Prototype</h1>
+  <div class="subtitle">
+    Ye tool facial expressions se <b>stress / anxiety / low mood signals</b> estimate karta hai.  
+    Ye <b>doctor nahi hai</b>, sirf ek early-warning & self-help assistant hai.
+  </div>
 
+  <div id="app">
+    <div class="camera-card">
+      <video id="video" playsinline></video>
+      <canvas id="overlay"></canvas>
+      <button id="start-btn">📷 Start camera</button>
+      <div id="status">Models loading… thoda wait karo 🔄</div>
+    </div>
+
+    <div class="info-card">
+      <div class="badge">
+        <span class="badge-dot"></span>
+        Retro-AI Wellness Check (Non-Diagnostic)
+      </div>
+
+      <div class="scores">
+        <div class="score-row">
+          <span class="score-label">Low-Mood Signal</span>
+          <div class="score-bar-wrapper">
+            <div id="bar-depression" class="score-bar"></div>
+          </div>
+          <span id="val-depression" class="score-value">0%</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-label">Anxiety-Like Signal</span>
+          <div class="score-bar-wrapper">
+            <div id="bar-anxiety" class="score-bar"></div>
+          </div>
+          <span id="val-anxiety" class="score-value">0%</span>
+        </div>
+
+        <div class="score-row">
+          <span class="score-label">Stress-Like Signal</span>
+          <div class="score-bar-wrapper">
+            <div id="bar-stress" class="score-bar"></div>
+          </div>
+          <span id="val-stress" class="score-value">0%</span>
+        </div>
+      </div>
+
+      <div id="risk-level" class="low">Waiting for face…</div>
+
+      <div id="urgent">
+        Signals bahut high lag rahe hain.  
+        <b>Kripya kisi qualified psychologist / psychiatrist se jaldi contact karein.</b>  
+        Agar aapko apni suraksha ke baare me chinta ho to apne local emergency number
+        ya trusted insaan se turant baat karein.
+      </div>
+
+      <div id="suggestion">
+        “Start camera” pe click kariye, phir camera ki taraf seedha dekhiye.
+      </div>
+
+      <div class="chips">
+        <div class="chip">⚕️ Doctor ko replace nahi karta</div>
+        <div class="chip">🔐 Camera data local browser me hi process hota hai</div>
+        <div class="chip">🧘 Self-help ke liye design</div>
+      </div>
+
+      <div class="disclaimer">
+        Ye tool sirf educational & wellness purpose ke liye hai. Ye clinical diagnosis ya treatment nahi deta.  
+        Agar aapko lagta hai ki aapko depression / anxiety / stress zyada ho raha hai, to
+        कृपया किसी मानसिक स्वास्थ्य विशेषज्ञ से मिलें.
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script>
     const video = document.getElementById("video");
-    const btn = document.getElementById("btn");
-    const msg = document.getElementById("msg");
+    const overlay = document.getElementById("overlay");
+    const statusEl = document.getElementById("status");
+    const startBtn = document.getElementById("start-btn");
+    const riskEl = document.getElementById("risk-level");
+    const urgentEl = document.getElementById("urgent");
+    const suggestionEl = document.getElementById("suggestion");
 
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      msg.textContent = "Ye browser camera ko support nahi karta. Please Chrome / Edge / Firefox latest use karein.";
+    const barDep = document.getElementById("bar-depression");
+    const barAnx = document.getElementById("bar-anxiety");
+    const barStr = document.getElementById("bar-stress");
+
+    const valDep = document.getElementById("val-depression");
+    const valAnx = document.getElementById("val-anxiety");
+    const valStr = document.getElementById("val-stress");
+
+    const history = { depression: [], anxiety: [], stress: [], maxLen: 30 };
+
+    function pushHistory(key, value) {
+      history[key].push(value);
+      if (history[key].length > history.maxLen) history[key].shift();
+      const sum = history[key].reduce((a, b) => a + b, 0);
+      return sum / history[key].length;
     }
 
-    btn.addEventListener("click", async () => {
-      msg.textContent = "Camera permission ke popup me ALLOW choose karein.";
+    async function loadModels() {
+      const MODEL_URL = "https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js/models";
+      statusEl.textContent = "Loading AI models from server…";
+      await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+      statusEl.textContent = "Models loaded ✅. 'Start camera' button dabaiye.";
+    }
+
+    async function startCamera() {
       try {
+        startBtn.disabled = true;
+        statusEl.textContent = "Camera start ho raha hai… permission allow karein.";
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         video.srcObject = stream;
-        msg.textContent = "✅ Camera chal raha hai. Agar yahan video dikh raha hai to problem Retro-AI code me hogi.";
+        video.onloadedmetadata = () => video.play();
+        statusEl.textContent = "Camera started. Face ki taraf dekhiye.";
+        suggestionEl.textContent = "System aapke expressions ko live analyse karega.";
+        analyzeLoop();
       } catch (err) {
         console.error(err);
-        msg.textContent = "❌ Camera error: " + err.name + " - " + err.message +
-          "\n\nAksar ye tab hota hai jab permission Block ho ya Windows settings me camera off ho.";
+        statusEl.textContent = "Camera access blocked. Browser settings me jaa kar camera allow karein.";
+        startBtn.disabled = false;
       }
-    });
+    }
+
+    async function analyzeLoop() {
+      if (!video.videoWidth || !video.videoHeight) {
+        requestAnimationFrame(analyzeLoop);
+        return;
+      }
+
+      overlay.width = video.videoWidth;
+      overlay.height = video.videoHeight;
+      const ctx = overlay.getContext("2d");
+      ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+      const detections = await faceapi
+        .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceExpressions();
+
+      if (!detections) {
+        statusEl.textContent = "Face nahin mila. Camera ki taraf seedha dekhiye.";
+        updateScores(0, 0, 0, true);
+        requestAnimationFrame(analyzeLoop);
+        return;
+      }
+
+      statusEl.textContent = "Face detected. Analysing expressions…";
+
+      const resized = faceapi.resizeResults(detections, {
+        width: overlay.width,
+        height: overlay.height
+      });
+      faceapi.draw.drawDetections(overlay, resized);
+
+      const e = detections.expressions;
+      let depressionSignal = (e.sad + e.neutral * 0.5) * 100;
+      let anxietySignal = (e.fear + e.surprised * 0.5) * 100;
+      let stressSignal = (e.angry + e.disgusted * 0.5 + e.fear * 0.5) * 100;
+
+      depressionSignal = Math.min(100, Math.max(0, depressionSignal));
+      anxietySignal = Math.min(100, Math.max(0, anxietySignal));
+      stressSignal = Math.min(100, Math.max(0, stressSignal));
+
+      const depAvg = pushHistory("depression", depressionSignal);
+      const anxAvg = pushHistory("anxiety", anxietySignal);
+      const strAvg = pushHistory("stress", stressSignal);
+
+      updateScores(depAvg, anxAvg, strAvg, false);
+      requestAnimationFrame(analyzeLoop);
+    }
+
+    function updateScores(dep, anx, str, noFace) {
+      if (noFace) {
+        barDep.style.width = "0%";
+        barAnx.style.width = "0%";
+        barStr.style.width = "0%";
+        valDep.textContent = "0%";
+        valAnx.textContent = "0%";
+        valStr.textContent = "0%";
+        riskEl.textContent = "Waiting for face…";
+        riskEl.className = "low";
+        urgentEl.style.display = "none";
+        suggestionEl.textContent =
+          "Camera ki taraf dekhiye aur apna face clearly dikhaiye. Light theek honi chahiye.";
+        return;
+      }
+
+      const d = Math.round(dep);
+      const a = Math.round(anx);
+      const s = Math.round(str);
+
+      barDep.style.width = d + "%";
+      barAnx.style.width = a + "%";
+      barStr.style.width = s + "%";
+
+      valDep.textContent = d + "%";
+      valAnx.textContent = a + "%";
+      valStr.textContent = s + "%";
+
+      const maxSignal = Math.max(d, a, s);
+      let level = "low";
+      let text = "Current risk: Low (wellness signals normal range).";
+      let suggestion = "Deep breathing, healthy sleep, aur daily routine maintain karna helpful hota hai. 🙂";
+
+      if (maxSignal >= 40 && maxSignal < 70) {
+        level = "medium";
+        text = "Current risk: Medium. Stress / mood signals thode elevated lag rahe hain.";
+        suggestion = "Aaj thoda break lijiye, walk par jayiye, kisi trusted dost / family se baat kariye.";
+      } else if (maxSignal >= 70 && maxSignal < 90) {
+        level = "high";
+        text = "Current risk: High. Aapke emotional signals kaafi strong lag rahe hain.";
+        suggestion =
+          "Agar ye feeling roz aa rahi hai, to ek mental health professional se baat karna achha rahega.";
+      } else if (maxSignal >= 90) {
+        level = "very-high";
+        text = "Current risk: Very High. Please take this seriously.";
+        suggestion =
+          "Kripya jaldi se psychologist / psychiatrist se appointment lene ke bare me sochein. Support lena bilkul theek hai.";
+      }
+
+      riskEl.className = level;
+      riskEl.textContent = text;
+      suggestionEl.textContent = suggestion;
+      urgentEl.style.display = maxSignal >= 90 ? "block" : "none";
+    }
+
+    (async function init() {
+      await loadModels();
+    })();
+
+    startBtn.addEventListener("click", startCamera);
   </script>
 </body>
 </html>
+
